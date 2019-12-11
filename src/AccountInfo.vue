@@ -1,6 +1,8 @@
 <template>
     <div class="AccountInfo">
-
+      <div class="waiter" v-if="waiting">
+        <img class="spinner" :src="host+'/static/img/shared/spinner.gif'"/>
+      </div>
       <div class="addAvatar  block">
         <div class="label1">Добавление аватара</div>
         <img :src="settings.avatar.big" class="big"/>
@@ -27,7 +29,7 @@
         <div class="label1">Доп. информация</div>
         <div v-for="i in infoKeys" class="line">
           <div class="label">{{i.label}}</div>
-          <textarea v-if="i.label=='О компании'"></textarea>
+          <textarea v-if="i.label=='О компании'" v-model="alterInfo[i.key]"></textarea>
           <input v-else class="text" v-model="alterInfo[i.key]"/>
         </div>
         <div class="btn" @click="saveInfo">Сохранить</div>
@@ -105,6 +107,7 @@
         name: "AccountInfo",
         data: function () {
             return {
+              waiting: false,
               passwords:['',''],
               infoKeys: [{key:"name",label:'Название компании'},{key:"site",label:'Сайт'},{key:"city",label:'Город'},{key:"mail",label:'Почта'},{key:"phone",label:'Телефон'},{key:"phone2",label:'Доп. телефон'},{key:"description",label:'О компании'}],
               days:[{name:'понедельник', key:'mon'},{name:'вторник', key:'tue'},{name:'среда', key:'wed'},{name:'четверг', key:'thu'},{name:'пятница', key:'fri'},{name:'суббота', key:'sat'},{name:'воскресенье', key:'sun'},],
@@ -133,9 +136,9 @@
                 }*/
                 vm.alterInfo = ans.company.info;
                 vm.workTime = ans.company.workTime;
-                vm.noteVals = ans.company.notification;
+                vm.noteVals = ans.user.notification;
                 vm.rentInfo = ans.company.rent;
-
+                //vm.rentInfo.delivery =[];
                 //vm.rentInfo.delivery = [{'name':'Самовывоз со склада', 'cost': ''},{'name':'Доставка внутри МКАД', 'cost': ''},{'name':'Доставка за МКАД', 'cost': ''}];
                 vm.$forceUpdate();
               })
@@ -149,6 +152,8 @@
             var vm = this;
             var fd = new FormData;
 
+            vm.waiting = true;
+
             for ( let key in vm.noteVals ) {
               fd.set(key, vm.noteVals[key]);
             }
@@ -158,6 +163,7 @@
                   ax.post("/account/save-notification", fd,{headers:{'X-CSRFToken':data1.data}})
                     .then(function(data){
                         console.log(data.data);
+                        vm.waiting = false;
                       }
                     )
                     .catch(function(data){
@@ -175,6 +181,8 @@
             var vm = this;
             var fd = new FormData;
 
+            vm.waiting = true;
+
             for ( let key in vm.workTime ) {
               fd.set(key, JSON.stringify(vm.workTime[key]));
             }
@@ -184,25 +192,34 @@
                   ax.post("/account/save-work-time", fd,{headers:{'X-CSRFToken':data1.data}})
                     .then(function(data){
                         console.log(data.data);
+                        vm.waiting = false;
                       }
                     )
                     .catch(function(data){
+                        vm.waiting = false;
                         console.warn(data.response.data);
                       }
                     )
                 }
               )
               .catch(function(data){
-                  console.warn(data.response.data);
+                  vm.waiting = false;
+                  if(data.response)
+                    console.warn(data.response.data);
+                  else
+                    console.warn('no connection')
+
                 }
               )
           },
           saveInfo: function () {
             var vm = this;
             var fd = new FormData;
+            vm.waiting = true;
 
             for ( let key in vm.alterInfo ) {
-              fd.set(key, JSON.stringify(vm.alterInfo[key]));
+              fd.set(key, vm.alterInfo[key]);
+              console.log(vm.alterInfo['description']);
             }
             console.log(fd);
             ax.get("/shared/get-csrf-token")
@@ -210,27 +227,35 @@
                   ax.post("/account/save-info", fd,{headers:{'X-CSRFToken':data1.data}})
                     .then(function(data){
                         console.log(data.data);
+                        vm.waiting = false;
                       }
                     )
                     .catch(function(data){
+                        vm.waiting = false;
                         console.warn(data.response.data);
                       }
                     )
                 }
               )
               .catch(function(data){
-                  console.warn(data.response.data);
-                }
-              )
+                  vm.waiting = false;
+                  if(data.response)
+                    console.warn(data.response.data);
+                  else
+                    console.warn('no connection')
+
+                })
           },
           saveRent: function () {
             var vm = this;
             var fd = new FormData;
+            vm.waiting = true;
 
             for ( let key in vm.rentInfo ) {
-              fd.set(key, JSON.stringify(vm.rentInfo[key]));
-              console.log(key);
-              console.log(vm.rentInfo[key]);
+              if (key=='delivery') fd.set(key, JSON.stringify(vm.rentInfo[key]));
+              else fd.set(key, vm.rentInfo[key]);
+              /*console.log(key);
+              console.log(vm.rentInfo[key]);*/
             }
             console.log(fd);
             ax.get("/shared/get-csrf-token")
@@ -238,6 +263,7 @@
                   ax.post("/account/save-rent", fd,{headers:{'X-CSRFToken':data1.data}})
                     .then(function(data){
                         console.log(data.data);
+                        vm.waiting = false;
                       }
                     )
                     .catch(function(data){
@@ -294,6 +320,21 @@
     margin-right: 20px
     margin-bottom: 20px
     padding-bottom: 35px
+    .waiter
+      position: fixed
+      top: 0
+      left: 0
+      background-color: white
+      opacity: 0.5
+      height: 100vh
+      width: 100vw
+      .spinner
+        text-align: center
+        display: block
+        //margin: auto
+        margin-left: calc(50vw - 16px + 132px)
+        margin-top: calc(50vh - 16px)
+        vertical-align: middle
     .block
       margin-top: 30px
       display: inline-block

@@ -1,6 +1,9 @@
 <template>
     <div class="BtnBar">
-      <div class="btn" v-for="btn in btns">{{btn.text}}</div>
+      <div class="btn" v-for="btn in btns">
+        <span class="name">{{btn.text}}</span>
+        <span class="counter">{{btn.counter}}</span>
+      </div>
     </div>
 </template>
 
@@ -11,12 +14,13 @@
         data:function () {
           return {
             btns:[{text:'Настройки профиля'},
-              {text:'Календарь'},
+              {text:'Сообщения',counter:15},
+              {text:'Запросы от клиентов',counter:1},
               {text:'Мои заказы'},
-              {text:'Запросы от клиентов'},
+              {text:'Календарь'},
               {text:'Мой декор'},
-              {text:'Оплата'},
-              {text:'Мои коллекции'}],
+              {text:'Мои коллекции'},
+              {text:'Оплата'}],
           }
         }
     }
@@ -41,5 +45,8 @@
       height: 24px
       padding: 8px 15px 8px 15px
       font-size: 18px
+      .counter
+        font-weight: bold
+        float: right
 
 </style>

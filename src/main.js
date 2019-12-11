@@ -1,13 +1,10 @@
+import axios from 'axios';
+
 export let host='http://zlaksa.ru:9000';
 //export let host='http://localhost:9000';
+
 export let ax=(axios.create({  baseURL: host}))
 
-import axios from 'axios';
-export function b_ax(ax) {
-  return (ax.create({
-    baseURL: host
-  }))
-}
 export function myClone(arg) {
   let a = JSON.stringify(arg);
   return (JSON.parse(a));

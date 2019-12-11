@@ -11,12 +11,11 @@
         <span class="tab_text" >коллекции</span>
       </div>
       <div class="tab">
-        <span class="tab_text" >сообщения</span>
-        <img :src="host+'/static/img/shared/message-24.png'" style="opacity:0.5;"/>
+        <span class="tab_text" >поиск</span>
       </div>
       <div class="tab">
-        <span class="tab_text" >мой кабинет</span>
-        <img :src="host+'/static/img/shared/message-24.png'" style="opacity:0.2;"/>
+        <span class="tab_text" >личный кабинет</span>
+        <img :src="host+'/static/img/shared/message-24.png'"/>
       </div>
       <div class="tab">
         <span class="tab_text" >{{city}}</span>
@@ -48,10 +47,10 @@
   .TabBar
     //margin-bottom: 30px
     //width: inherit
-    margin-left: 67px
+    margin-left: 50px
     .tab
       display: inline
-      margin-right: 24px
+      margin-right: 45px
       //font-family: cursive
       font-size: 21px
       //margin: 10px
@@ -64,6 +63,7 @@
         float: right
       img
         //height: 18px
+        margin-left: 5px
         vertical-align: text-bottom
 
 </style>
