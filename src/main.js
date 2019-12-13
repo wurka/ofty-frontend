@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-export let host='http://zlaksa.ru:9000';
-//export let host='http://localhost:9000';
+//export let host='http://zlaksa.ru:9000';
+export let host='http://localhost:9000';
 
 export let ax=(axios.create({  baseURL: host}))
 

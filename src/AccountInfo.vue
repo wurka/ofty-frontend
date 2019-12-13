@@ -1,7 +1,7 @@
 <template>
     <div class="AccountInfo">
       <div class="waiter" v-if="waiting">
-        <img class="spinner" :src="host+'/static/img/shared/spinner.gif'"/>
+        <img class="waitImg" :src="waitImg"/>
       </div>
       <div class="addAvatar  block">
         <div class="label1">Добавление аватара</div>
@@ -15,11 +15,13 @@
         <div class="label1">Смена пароля</div>
         <div class="line">
           <div class="label">Новый пароль</div>
-          <input type="password" class="text" v-model="passwords[0]"/>
+          <input :type="showPswd[0] ? 'text' : 'password'" class="text pswd" v-model="passwords[0]" autocomplete="new-password"/>
+          <img :src="showPswd[0] ? host+'/static/img/shared/minus.png' : host+'/static/img/shared/plus.png'" class="eye" @click="showPswd[0]=1-showPswd[0]; $forceUpdate();"/>
         </div>
         <div class="line">
           <div class="label">Пароль еще раз</div>
-          <input type="password" class="text" v-model="passwords[1]"/>
+          <input :type="showPswd[1] ? 'text' : 'password'" class="text pswd" v-model="passwords[1]" autocomplete="new-password"/>
+          <img :src="showPswd[1] ? host+'/static/img/shared/minus.png' : host+'/static/img/shared/plus.png'" class="eye" @click="showPswd[1]=1-showPswd[1]; $forceUpdate();"/>
         </div>
         <div class="warning"><span v-if="passwords[0]!=passwords[1]">Пароли не совпадают</span></div>
         <div class="btn" @click="savePassword">Сменить пароль</div>
@@ -109,6 +111,7 @@
             return {
               waiting: false,
               passwords:['',''],
+              showPswd:[0,0],
               infoKeys: [{key:"name",label:'Название компании'},{key:"site",label:'Сайт'},{key:"city",label:'Город'},{key:"mail",label:'Почта'},{key:"phone",label:'Телефон'},{key:"phone2",label:'Доп. телефон'},{key:"description",label:'О компании'}],
               days:[{name:'понедельник', key:'mon'},{name:'вторник', key:'tue'},{name:'среда', key:'wed'},{name:'четверг', key:'thu'},{name:'пятница', key:'fri'},{name:'суббота', key:'sat'},{name:'воскресенье', key:'sun'},],
               noteKeys: [ {text:'Показывать мгновенные сообщения', key:'push'}, {text:'Включить звуковое оповещение', key:'sound'}, {text:'Присылать смс о моем заказе', key:'orderSms'}, {text:'Присылать смс об окончании и начале срока аренды', key:'timeSms'},{text:'Присылать сообщение о новом заказе на эл. почту', key:'orderMail'},{text:'Присылать сообщения об окончании и начале срока аренды на эл. почту', key:'timeMail'}],
@@ -121,6 +124,8 @@
               rentInfo:{},
               host: host,
               settings: 0,
+              waitImg:'',
+              errMsg:{},
             }
         },
         methods:{
@@ -143,8 +148,10 @@
                 vm.$forceUpdate();
               })
               .catch(function (data) {
-                  console.log(data);
-                  console.warn(data.response.data);
+                if(data)
+                  console.warn(data);
+                else
+                  console.warn('no connection')
                 }
               );
           },
@@ -152,7 +159,7 @@
             var vm = this;
             var fd = new FormData;
 
-            vm.waiting = true;
+            vm.startWaiting();
 
             for ( let key in vm.noteVals ) {
               fd.set(key, vm.noteVals[key]);
@@ -163,17 +170,25 @@
                   ax.post("/account/save-notification", fd,{headers:{'X-CSRFToken':data1.data}})
                     .then(function(data){
                         console.log(data.data);
-                        vm.waiting = false;
+                        vm.goodResult();
                       }
                     )
                     .catch(function(data){
+                        vm.badResult();
+                      if(data.response)
                         console.warn(data.response.data);
+                      else
+                        console.warn('no connection')
                       }
                     )
                 }
               )
               .catch(function(data){
+                vm.badResult();
+                if(data.response)
                   console.warn(data.response.data);
+                else
+                  console.warn('no connection')
                 }
               )
           },
@@ -181,7 +196,7 @@
             var vm = this;
             var fd = new FormData;
 
-            vm.waiting = true;
+            vm.startWaiting();
 
             for ( let key in vm.workTime ) {
               fd.set(key, JSON.stringify(vm.workTime[key]));
@@ -192,18 +207,21 @@
                   ax.post("/account/save-work-time", fd,{headers:{'X-CSRFToken':data1.data}})
                     .then(function(data){
                         console.log(data.data);
-                        vm.waiting = false;
+                        vm.goodResult();
                       }
                     )
                     .catch(function(data){
-                        vm.waiting = false;
+                        vm.badResult();
+                      if(data.response)
                         console.warn(data.response.data);
+                      else
+                        console.warn('no connection')
                       }
                     )
                 }
               )
               .catch(function(data){
-                  vm.waiting = false;
+                  vm.badResult();
                   if(data.response)
                     console.warn(data.response.data);
                   else
@@ -215,7 +233,7 @@
           saveInfo: function () {
             var vm = this;
             var fd = new FormData;
-            vm.waiting = true;
+            vm.startWaiting();
 
             for ( let key in vm.alterInfo ) {
               fd.set(key, vm.alterInfo[key]);
@@ -227,18 +245,21 @@
                   ax.post("/account/save-info", fd,{headers:{'X-CSRFToken':data1.data}})
                     .then(function(data){
                         console.log(data.data);
-                        vm.waiting = false;
+                        vm.goodResult();
                       }
                     )
                     .catch(function(data){
-                        vm.waiting = false;
+                        vm.badResult();
+                      if(data.response)
                         console.warn(data.response.data);
+                      else
+                        console.warn('no connection')
                       }
                     )
                 }
               )
               .catch(function(data){
-                  vm.waiting = false;
+                  vm.badResult();
                   if(data.response)
                     console.warn(data.response.data);
                   else
@@ -249,7 +270,7 @@
           saveRent: function () {
             var vm = this;
             var fd = new FormData;
-            vm.waiting = true;
+            vm.startWaiting();
 
             for ( let key in vm.rentInfo ) {
               if (key=='delivery') fd.set(key, JSON.stringify(vm.rentInfo[key]));
@@ -262,18 +283,26 @@
               .then(function(data1){
                   ax.post("/account/save-rent", fd,{headers:{'X-CSRFToken':data1.data}})
                     .then(function(data){
-                        console.log(data.data);
-                        vm.waiting = false;
+                      console.log(data.data);
+                      vm.goodResult();
                       }
                     )
                     .catch(function(data){
+                      vm.badResult();
+                      if(data.response)
                         console.warn(data.response.data);
+                      else
+                        console.warn('no connection')
                       }
                     )
                 }
               )
               .catch(function(data){
+                vm.badResult();
+                if(data.response)
                   console.warn(data.response.data);
+                else
+                  console.warn('no connection')
                 }
               )
           },
@@ -281,24 +310,52 @@
             var vm = this;
             var fd = new FormData;
             if (vm.passwords[0]!=vm.passwords[1]) return;
+            vm.startWaiting();
             fd.set('password',vm.passwords[0])
             ax.get("/shared/get-csrf-token")
               .then(function(data1){
                   ax.post("/account/password-set", fd,{headers:{'X-CSRFToken':data1.data}})
                     .then(function(data){
-                        console.log(data.data);
+                      vm.goodResult();
+                      console.log(data.data);
                       }
                     )
                     .catch(function(data){
+                      vm.badResult();
+                      if(data.response)
                         console.warn(data.response.data);
+                      else
+                        console.warn('no connection')
                       }
                     )
                 }
               )
               .catch(function(data){
+                vm.badResult();
+                if(data.response)
                   console.warn(data.response.data);
+                else
+                  console.warn('no connection')
                 }
               )
+          },
+          startWaiting: function(){
+            this.waitImg = host + '/static/img/shared/spinner.gif';
+            this.waiting = true;
+          },
+          goodResult: function () {
+            let vm = this;
+            this.waitImg = host + '/static/img/shared/r_plus.png';
+            window.setTimeout(function() {vm.waiting = false; console.log('good');}, 1000);
+
+
+          },
+          badResult: function () {
+            let vm = this;
+            this.waitImg = host + '/static/img/shared/r_minus.png';
+            window.setTimeout(function() {vm.waiting = false; console.log('bad');}, 1000);
+
+
           },
         },
 
@@ -328,13 +385,14 @@
       opacity: 0.5
       height: 100vh
       width: 100vw
-      .spinner
+      .waitImg
         text-align: center
         display: block
         //margin: auto
         margin-left: calc(50vw - 16px + 132px)
         margin-top: calc(50vh - 16px)
         vertical-align: middle
+        width: 32px
     .block
       margin-top: 30px
       display: inline-block
@@ -366,6 +424,13 @@
           height: 80px
           width: 400px
           resize: none
+        .pswd
+          width: 145px
+          padding-right: 20px
+        .eye
+          margin-left: -25px
+          width: 15px
+          cursor: pointer
       .label1
         font-size: 21px
         font-family: Philosopher
