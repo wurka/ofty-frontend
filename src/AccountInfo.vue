@@ -7,25 +7,25 @@
         <div class="label1">Добавление аватара</div>
         <img :src="settings.avatar.big" class="big"/>
         <img :src="settings.avatar.small" class="small"/>
-        <div class="warning">Размер файла слишком велик, используйте другой файл.</div>
+        <div class="warning"><span >{{errMsg.img}}</span></div>
         <div class="btn">Сохранить</div>
       </div>
 
-      <div class="changePswd block">
+      <form class="changePswd block">
         <div class="label1">Смена пароля</div>
         <div class="line">
           <div class="label">Новый пароль</div>
-          <input :type="showPswd[0] ? 'text' : 'password'" class="text pswd" v-model="passwords[0]" autocomplete="new-password"/>
+          <input :type="showPswd[0] ? 'text' : 'password'" class="text pswd" v-model="passwords[0]" />
           <img :src="showPswd[0] ? host+'/static/img/shared/minus.png' : host+'/static/img/shared/plus.png'" class="eye" @click="showPswd[0]=1-showPswd[0]; $forceUpdate();"/>
         </div>
         <div class="line">
           <div class="label">Пароль еще раз</div>
-          <input :type="showPswd[1] ? 'text' : 'password'" class="text pswd" v-model="passwords[1]" autocomplete="new-password"/>
+          <input :type="showPswd[1] ? 'text' : 'password'" class="text pswd" v-model="passwords[1]" />
           <img :src="showPswd[1] ? host+'/static/img/shared/minus.png' : host+'/static/img/shared/plus.png'" class="eye" @click="showPswd[1]=1-showPswd[1]; $forceUpdate();"/>
         </div>
-        <div class="warning"><span v-if="passwords[0]!=passwords[1]">Пароли не совпадают</span></div>
+        <div class="warning"><span >{{errMsg.pswd}}</span></div>
         <div class="btn" @click="savePassword">Сменить пароль</div>
-      </div>
+      </form>
 
       <div class="alterInfo block">
         <div class="label1">Доп. информация</div>
@@ -34,6 +34,7 @@
           <textarea v-if="i.label=='О компании'" v-model="alterInfo[i.key]"></textarea>
           <input v-else class="text" v-model="alterInfo[i.key]"/>
         </div>
+        <div class="warning"><span >{{errMsg.info}}</span></div>
         <div class="btn" @click="saveInfo">Сохранить</div>
       </div>
 
@@ -62,6 +63,7 @@
           <div class="label">Комментарий</div>
           <textarea  v-model="rentInfo.description"></textarea>
         </div>
+        <div class="warning"><span >{{errMsg.rent}}</span></div>
         <div class="btn" @click="saveRent">Сохранить</div>
       </div>
 
@@ -88,6 +90,7 @@
           <input type="checkbox" class="cb" v-model="workTime[i.key]['rest']"/>
           <span>выходной</span>
         </div>
+        <div class="warning"><span >{{errMsg.workTime}}</span></div>
         <div class="btn" @click="saveTime">Сохранить</div>
       </div>
 
@@ -97,6 +100,7 @@
           <input type="checkbox" v-model="noteVals[i.key]"/>
           <div class="label">{{i.text}}</div>
         </div>
+        <div class="warning"><span >{{errMsg.note}}</span></div>
         <div class="btn" @click="saveNote">Сохранить</div>
       </div>
     </div>
@@ -125,7 +129,7 @@
               host: host,
               settings: 0,
               waitImg:'',
-              errMsg:{},
+              errMsg:{'img':'Тестовая формулировка ошибки','pswd':'','info':'Тестовая формулировка ошибки','rent':'Тестовая формулировка ошибки','workTime':'Тестовая формулировка ошибки','note':'Тестовая формулировка ошибки'},
             }
         },
         methods:{
@@ -309,7 +313,11 @@
           savePassword: function () {
             var vm = this;
             var fd = new FormData;
-            if (vm.passwords[0]!=vm.passwords[1]) return;
+            vm.errMsg.pswd ='';
+            if (vm.passwords[0]!=vm.passwords[1]) {
+              vm.errMsg.pswd = 'Пароли не совпадают';
+              return;
+            }
             vm.startWaiting();
             fd.set('password',vm.passwords[0])
             ax.get("/shared/get-csrf-token")
@@ -322,22 +330,26 @@
                     )
                     .catch(function(data){
                       vm.badResult();
-                      if(data.response)
+                      if(data.response) {
                         console.warn(data.response.data);
-                      else
-                        console.warn('no connection')
+                        if (data.response.data == 'password must be at last 4 chars') vm.errMsg.pswd = 'Пароль должен быть длиннее 3 символов';
                       }
-                    )
+                      else{
+                        console.warn('no connection')
+                        vm.errMsg.pswd = 'Не удалось сохранить изменения из-за проблем со связью';
+                      }
+                    })
                 }
               )
               .catch(function(data){
                 vm.badResult();
                 if(data.response)
                   console.warn(data.response.data);
-                else
+                else{
                   console.warn('no connection')
+                  vm.errMsg.pswd = 'Не удалось сохранить изменения из-за проблем со связью';
                 }
-              )
+              })
           },
           startWaiting: function(){
             this.waitImg = host + '/static/img/shared/spinner.gif';
